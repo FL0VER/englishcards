@@ -1,18 +1,43 @@
 const tg = window.Telegram.WebApp;
-tg.expand(); // Развернуть на весь экран
+tg.expand();
 
-// База данных слов (в реальности загружалась бы с сервера)
+// РАСШИРЕННАЯ БАЗА СЛОВ (20 слов)
+// Добавляйте сюда новые слова в формате { en: "Word", ru: "Перевод" }
 const vocabulary = [
-    { en: "Cat", ru: "Кошка", options: ["Собака", "Кошка", "Мышь"] },
-    { en: "Dog", ru: "Собака", options: ["Слон", "Собака", "Волк"] },
-    { en: "Apple", ru: "Яблоко", options: ["Груша", "Яблоко", "Апельсин"] },
-    { en: "Car", ru: "Машина", options: ["Самолет", "Машина", "Велосипед"] }
+    { en: "Cat", ru: "Кошка" },
+    { en: "Dog", ru: "Собака" },
+    { en: "Apple", ru: "Яблоко" },
+    { en: "Sun", ru: "Солнце" },
+    { en: "Water", ru: "Вода" },
+    { en: "Friend", ru: "Друг" },
+    { en: "Book", ru: "Книга" },
+    { en: "House", ru: "Дом" },
+    { en: "Tree", ru: "Дерево" },
+    { en: "Car", ru: "Машина" },
+    { en: "Time", ru: "Время" },
+    { en: "Money", ru: "Деньги" },
+    { en: "Music", ru: "Музыка" },
+    { en: "Sky", ru: "Небо" },
+    { en: "Happy", ru: "Счастливый" },
+    { en: "Red", ru: "Красный" },
+    { en: "To run", ru: "Бежать" },
+    { en: "To eat", ru: "Есть (кушать)" },
+    { en: "Beautiful", ru: "Красивый" },
+    { en: "Work", ru: "Работа" }
 ];
 
 let currentIndex = 0;
+let isQuizAnswered = false; // Блокировка повторных нажатий в викторине
+
+// --- НАВИГАЦИЯ ---
 
 function startMode(mode) {
-    document.querySelector('.menu').classList.add('hidden');
+    document.getElementById('main-menu').classList.add('hidden');
+    
+    // Перемешиваем слова при каждом запуске, чтобы было интереснее
+    shuffleArray(vocabulary);
+    currentIndex = 0;
+
     if (mode === 'cards') {
         document.getElementById('cards-section').classList.remove('hidden');
         showCard();
@@ -22,12 +47,20 @@ function startMode(mode) {
     }
 }
 
-// --- Логика Карточек ---
+function goBack() {
+    // Скрываем игровые экраны
+    document.getElementById('cards-section').classList.add('hidden');
+    document.getElementById('quiz-section').classList.add('hidden');
+    // Показываем меню
+    document.getElementById('main-menu').classList.remove('hidden');
+}
+
+// --- КАРТОЧКИ ---
+
 function showCard() {
     const cardElement = document.querySelector('.card');
-    cardElement.classList.remove('flipped'); // Сброс переворота
+    cardElement.classList.remove('flipped');
     
-    // Небольшая задержка, чтобы анимация сброса прошла красиво
     setTimeout(() => {
         document.getElementById('word-front').innerText = vocabulary[currentIndex].en;
         document.getElementById('word-back').innerText = vocabulary[currentIndex].ru;
@@ -43,17 +76,30 @@ function nextCard() {
     showCard();
 }
 
-// --- Логика Викторины ---
+function prevCard() {
+    // Логика перехода назад, с учетом зацикливания
+    currentIndex = (currentIndex - 1 + vocabulary.length) % vocabulary.length;
+    showCard();
+}
+
+// --- ВИКТОРИНА ---
+
 function showQuiz() {
+    isQuizAnswered = false;
     const item = vocabulary[currentIndex];
-    document.getElementById('quiz-question').innerText = `Как переводится "${item.en}"?`;
+    
+    document.getElementById('quiz-counter').innerText = `Слово ${currentIndex + 1} из ${vocabulary.length}`;
+    document.getElementById('quiz-question').innerText = item.en;
     document.getElementById('quiz-feedback').innerText = "";
+    document.getElementById('next-quiz-btn').classList.add('hidden');
     
     const optionsDiv = document.getElementById('quiz-options');
-    optionsDiv.innerHTML = ""; // Очистка
+    optionsDiv.innerHTML = "";
 
-    // Перемешиваем варианты (для примера просто берем из объекта)
-    item.options.forEach(opt => {
+    // Генерация вариантов ответов
+    const options = generateOptions(item);
+    
+    options.forEach(opt => {
         const btn = document.createElement('button');
         btn.innerText = opt;
         btn.onclick = () => checkAnswer(opt, item.ru, btn);
@@ -61,20 +107,55 @@ function showQuiz() {
     });
 }
 
+function generateOptions(correctItem) {
+    // Берем правильный ответ
+    let opts = [correctItem.ru];
+    
+    // Добавляем 2 случайных неправильных
+    while (opts.length < 3) {
+        let randomWord = vocabulary[Math.floor(Math.random() * vocabulary.length)].ru;
+        if (!opts.includes(randomWord)) {
+            opts.push(randomWord);
+        }
+    }
+    // Перемешиваем варианты
+    return shuffleArray(opts);
+}
+
 function checkAnswer(selected, correct, btnElement) {
+    if (isQuizAnswered) return; // Запрет на повторный клик
+    isQuizAnswered = true;
+
     if (selected === correct) {
         btnElement.classList.add('correct');
         document.getElementById('quiz-feedback').innerText = "Верно! 🎉";
-        tg.hapticFeedback.notificationOccurred('success'); // Вибрация
-        
-        // Переход к следующему вопросу через секунду
-        setTimeout(() => {
-            currentIndex = (currentIndex + 1) % vocabulary.length;
-            showQuiz();
-        }, 1000);
+        tg.hapticFeedback.notificationOccurred('success');
+        document.getElementById('next-quiz-btn').classList.remove('hidden'); // Показать кнопку "Дальше"
     } else {
         btnElement.classList.add('wrong');
-        document.getElementById('quiz-feedback').innerText = "Неверно, попробуй еще раз.";
-        tg.hapticFeedback.notificationOccurred('error'); // Вибрация ошибки
+        document.getElementById('quiz-feedback').innerText = `Ошибка. Правильно: ${correct}`;
+        tg.hapticFeedback.notificationOccurred('error');
+        
+        // Подсветить правильный ответ
+        const buttons = document.querySelectorAll('#quiz-options button');
+        buttons.forEach(btn => {
+            if (btn.innerText === correct) btn.classList.add('correct');
+        });
+        
+        document.getElementById('next-quiz-btn').classList.remove('hidden');
     }
+}
+
+function nextQuestion() {
+    currentIndex = (currentIndex + 1) % vocabulary.length;
+    showQuiz();
+}
+
+// Вспомогательная функция перемешивания массива (Алгоритм Фишера-Йетса)
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
 }
