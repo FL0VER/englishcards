@@ -15,7 +15,7 @@ body {
     padding: 20px;
     display: flex;
     justify-content: center;
-    -webkit-tap-highlight-color: transparent; /* Убирает подсветку при клике на мобильных */
+    -webkit-tap-highlight-color: transparent;
 }
 
 .container {
@@ -23,7 +23,7 @@ body {
     max-width: 400px;
 }
 
-h1 { margin-bottom: 30px; text-align: center; }
+h1, h2 { text-align: center; }
 .hidden { display: none !important; }
 
 /* Кнопки */
@@ -40,30 +40,26 @@ button {
     margin-bottom: 10px;
     transition: opacity 0.2s;
 }
-
 button:active { opacity: 0.8; }
 
-/* Шапка с кнопкой назад */
+/* Шапка */
 .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 20px;
 }
-
 .header span {
     font-weight: bold;
     font-size: 18px;
     color: var(--hint-color);
 }
-
 .back-btn {
     width: auto;
     background-color: transparent;
     color: var(--btn-color);
     padding: 5px 10px;
     margin: 0;
-    font-size: 16px;
 }
 
 /* Карточки */
@@ -74,8 +70,8 @@ button:active { opacity: 0.8; }
     perspective: 1000px;
     margin-bottom: 20px;
     cursor: pointer;
+    user-select: none;
 }
-
 .card-inner {
     position: relative;
     width: 100%;
@@ -86,9 +82,7 @@ button:active { opacity: 0.8; }
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     border-radius: 20px;
 }
-
 .flipped .card-inner { transform: rotateY(180deg); }
-
 .card-front, .card-back {
     position: absolute;
     width: 100%;
@@ -104,12 +98,10 @@ button:active { opacity: 0.8; }
     background-color: var(--bg-color);
     border: 2px solid var(--secondary-bg);
 }
-
 .card-back {
     background-color: var(--secondary-bg);
     transform: rotateY(180deg);
 }
-
 .hint {
     font-size: 12px;
     color: var(--hint-color);
@@ -117,18 +109,20 @@ button:active { opacity: 0.8; }
     font-weight: normal;
 }
 
-/* Управление карточками */
-.controls {
-    display: flex;
-    gap: 10px;
-}
+/* Управление */
+.controls { display: flex; gap: 10px; }
 .nav-btn { background-color: var(--secondary-bg); color: var(--text-color); }
 .main-action { background-color: var(--btn-color); color: var(--btn-text); }
 
 /* Викторина */
 .quiz-content { text-align: center; }
 .progress { color: var(--hint-color); font-size: 14px; margin-bottom: 10px; }
-#quiz-options button { margin-top: 10px; text-align: center; }
+#quiz-options button { margin-top: 8px; text-align: center; background-color: var(--secondary-bg); color: var(--text-color); }
 
 .correct { background-color: #4caf50 !important; color: white !important; }
 .wrong { background-color: #f44336 !important; color: white !important; }
+
+/* Результаты */
+.result-box { text-align: center; padding: 20px 0; }
+.big-score { font-size: 48px; font-weight: bold; color: var(--btn-color); margin: 20px 0; }
+.score-text { font-size: 18px; color: var(--hint-color); }
