@@ -1,8 +1,9 @@
 const tg = window.Telegram.WebApp;
+
+// Сообщаем телеграму, что приложение готово
+tg.ready();
 tg.expand();
 
-// РАСШИРЕННАЯ БАЗА СЛОВ (20 слов)
-// Добавляйте сюда новые слова в формате { en: "Word", ru: "Перевод" }
 const vocabulary = [
     { en: "Cat", ru: "Кошка" },
     { en: "Dog", ru: "Собака" },
@@ -27,14 +28,21 @@ const vocabulary = [
 ];
 
 let currentIndex = 0;
-let isQuizAnswered = false; // Блокировка повторных нажатий в викторине
+let isQuizAnswered = false;
+
+// Безопасная функция вибрации (не ломается в браузере)
+function triggerHaptic(type) {
+    if (tg.hapticFeedback) {
+        tg.hapticFeedback.notificationOccurred(type);
+    }
+}
 
 // --- НАВИГАЦИЯ ---
 
 function startMode(mode) {
     document.getElementById('main-menu').classList.add('hidden');
     
-    // Перемешиваем слова при каждом запуске, чтобы было интереснее
+    // Перемешиваем массив, чтобы вопросы шли не по порядку
     shuffleArray(vocabulary);
     currentIndex = 0;
 
@@ -48,10 +56,8 @@ function startMode(mode) {
 }
 
 function goBack() {
-    // Скрываем игровые экраны
     document.getElementById('cards-section').classList.add('hidden');
     document.getElementById('quiz-section').classList.add('hidden');
-    // Показываем меню
     document.getElementById('main-menu').classList.remove('hidden');
 }
 
@@ -61,6 +67,7 @@ function showCard() {
     const cardElement = document.querySelector('.card');
     cardElement.classList.remove('flipped');
     
+    // Ждем пока анимация возврата пройдет
     setTimeout(() => {
         document.getElementById('word-front').innerText = vocabulary[currentIndex].en;
         document.getElementById('word-back').innerText = vocabulary[currentIndex].ru;
@@ -77,7 +84,6 @@ function nextCard() {
 }
 
 function prevCard() {
-    // Логика перехода назад, с учетом зацикливания
     currentIndex = (currentIndex - 1 + vocabulary.length) % vocabulary.length;
     showCard();
 }
@@ -88,61 +94,67 @@ function showQuiz() {
     isQuizAnswered = false;
     const item = vocabulary[currentIndex];
     
+    // Сбрасываем интерфейс
     document.getElementById('quiz-counter').innerText = `Слово ${currentIndex + 1} из ${vocabulary.length}`;
     document.getElementById('quiz-question').innerText = item.en;
     document.getElementById('quiz-feedback').innerText = "";
-    document.getElementById('next-quiz-btn').classList.add('hidden');
+    
+    // ВАЖНО: Скрываем кнопку "Дальше" в начале вопроса
+    const nextBtn = document.getElementById('next-quiz-btn');
+    if (nextBtn) nextBtn.classList.add('hidden');
     
     const optionsDiv = document.getElementById('quiz-options');
     optionsDiv.innerHTML = "";
 
-    // Генерация вариантов ответов
     const options = generateOptions(item);
     
     options.forEach(opt => {
         const btn = document.createElement('button');
         btn.innerText = opt;
-        btn.onclick = () => checkAnswer(opt, item.ru, btn);
+        // Передаем саму кнопку в функцию, чтобы менять её цвет
+        btn.onclick = function() { checkAnswer(opt, item.ru, this); };
         optionsDiv.appendChild(btn);
     });
 }
 
 function generateOptions(correctItem) {
-    // Берем правильный ответ
     let opts = [correctItem.ru];
-    
-    // Добавляем 2 случайных неправильных
     while (opts.length < 3) {
         let randomWord = vocabulary[Math.floor(Math.random() * vocabulary.length)].ru;
         if (!opts.includes(randomWord)) {
             opts.push(randomWord);
         }
     }
-    // Перемешиваем варианты
     return shuffleArray(opts);
 }
 
 function checkAnswer(selected, correct, btnElement) {
-    if (isQuizAnswered) return; // Запрет на повторный клик
+    if (isQuizAnswered) return;
     isQuizAnswered = true;
+
+    const nextBtn = document.getElementById('next-quiz-btn');
 
     if (selected === correct) {
         btnElement.classList.add('correct');
         document.getElementById('quiz-feedback').innerText = "Верно! 🎉";
-        tg.hapticFeedback.notificationOccurred('success');
-        document.getElementById('next-quiz-btn').classList.remove('hidden'); // Показать кнопку "Дальше"
+        triggerHaptic('success');
     } else {
         btnElement.classList.add('wrong');
         document.getElementById('quiz-feedback').innerText = `Ошибка. Правильно: ${correct}`;
-        tg.hapticFeedback.notificationOccurred('error');
+        triggerHaptic('error');
         
-        // Подсветить правильный ответ
+        // Подсветить правильную кнопку
         const buttons = document.querySelectorAll('#quiz-options button');
         buttons.forEach(btn => {
             if (btn.innerText === correct) btn.classList.add('correct');
         });
-        
-        document.getElementById('next-quiz-btn').classList.remove('hidden');
+    }
+
+    // ВАЖНО: Показываем кнопку "Дальше" после любого ответа
+    if (nextBtn) {
+        nextBtn.classList.remove('hidden');
+    } else {
+        console.error("Кнопка 'Дальше' не найдена в HTML!");
     }
 }
 
@@ -151,7 +163,6 @@ function nextQuestion() {
     showQuiz();
 }
 
-// Вспомогательная функция перемешивания массива (Алгоритм Фишера-Йетса)
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
