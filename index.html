@@ -2,14 +2,14 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LangBot App</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <div class="container">
-        <!-- Главное меню -->
+        <!-- ГЛАВНОЕ МЕНЮ -->
         <div id="main-menu">
             <h1>Учим английский 🇬🇧</h1>
             <p>Выберите режим:</p>
@@ -19,7 +19,7 @@
             </div>
         </div>
 
-        <!-- Режим Карточек -->
+        <!-- РЕЖИМ КАРТОЧЕК -->
         <div id="cards-section" class="hidden mode-container">
             <div class="header">
                 <button class="back-btn" onclick="goBack()">⬅ Меню</button>
@@ -29,7 +29,7 @@
             <div class="card" onclick="flipCard()">
                 <div class="card-inner">
                     <div class="card-front">
-                        <span id="word-front">...</span>
+                        <span id="word-front">Loading...</span>
                         <div class="hint">(нажми, чтобы перевернуть)</div>
                     </div>
                     <div class="card-back" id="word-back">...</div>
@@ -42,7 +42,7 @@
             </div>
         </div>
 
-        <!-- Режим Викторины -->
+        <!-- РЕЖИМ ВИКТОРИНЫ -->
         <div id="quiz-section" class="hidden mode-container">
             <div class="header">
                 <button class="back-btn" onclick="goBack()">⬅ Меню</button>
@@ -52,9 +52,33 @@
             <div class="quiz-content">
                 <div class="progress" id="quiz-counter">Вопрос 1</div>
                 <h2 id="quiz-question">...</h2>
-                <div id="quiz-options"></div>
+                
+                <div id="quiz-options">
+                    <!-- Кнопки ответов появятся здесь -->
+                </div>
+                
                 <p id="quiz-feedback"></p>
-                <button id="next-quiz-btn" class="hidden" onclick="nextQuestion()">Дальше ➡</button>
+                
+                <!-- Кнопка ДАЛЬШЕ (скрыта по умолчанию) -->
+                <button id="next-quiz-btn" class="hidden main-action" onclick="nextQuestion()">Дальше ➡</button>
+            </div>
+        </div>
+
+        <!-- ЭКРАН РЕЗУЛЬТАТОВ -->
+        <div id="results-section" class="hidden mode-container">
+            <div class="header">
+                <button class="back-btn" onclick="goBack()">⬅ Меню</button>
+                <span>Итоги</span>
+            </div>
+            
+            <div class="result-box">
+                <h2>Викторина завершена! 🏁</h2>
+                <p class="score-text">Ваш результат:</p>
+                <div id="final-score" class="big-score">0 / 0</div>
+                <p id="result-message"></p>
+                
+                <button class="main-action" onclick="startMode('quiz')">🔄 Пройти заново</button>
+                <button class="nav-btn" onclick="goBack()">🏠 В главное меню</button>
             </div>
         </div>
     </div>
@@ -62,4 +86,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
