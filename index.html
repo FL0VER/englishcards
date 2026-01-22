@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangBot App</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Подключаем скрипт Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Учим слова 🇬🇧</h1>
+        
+        <!-- Меню -->
+        <div class="menu">
+            <button onclick="startMode('cards')">Карточки</button>
+            <button onclick="startMode('quiz')">Викторина</button>
+        </div>
+
+        <!-- Режим Карточек -->
+        <div id="cards-section" class="hidden">
+            <div class="card" onclick="flipCard()">
+                <div class="card-inner">
+                    <div class="card-front" id="word-front">Hello</div>
+                    <div class="card-back" id="word-back">Привет</div>
+                </div>
+            </div>
+            <button class="next-btn" onclick="nextCard()">Следующее слово</button>
+        </div>
+
+        <!-- Режим Викторины -->
+        <div id="quiz-section" class="hidden">
+            <h2 id="quiz-question">Как переводится "Apple"?</h2>
+            <div id="quiz-options">
+                <!-- Кнопки ответов появятся здесь -->
+            </div>
+            <p id="quiz-feedback"></p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
