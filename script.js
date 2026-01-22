@@ -1,36 +1,26 @@
 const tg = window.Telegram.WebApp;
-
-// Сообщаем телеграму, что приложение готово
 tg.ready();
 tg.expand();
 
+// БАЗА СЛОВ
 const vocabulary = [
-    { en: "Cat", ru: "Кошка" },
-    { en: "Dog", ru: "Собака" },
-    { en: "Apple", ru: "Яблоко" },
-    { en: "Sun", ru: "Солнце" },
-    { en: "Water", ru: "Вода" },
-    { en: "Friend", ru: "Друг" },
-    { en: "Book", ru: "Книга" },
-    { en: "House", ru: "Дом" },
-    { en: "Tree", ru: "Дерево" },
-    { en: "Car", ru: "Машина" },
-    { en: "Time", ru: "Время" },
-    { en: "Money", ru: "Деньги" },
-    { en: "Music", ru: "Музыка" },
-    { en: "Sky", ru: "Небо" },
-    { en: "Happy", ru: "Счастливый" },
-    { en: "Red", ru: "Красный" },
-    { en: "To run", ru: "Бежать" },
-    { en: "To eat", ru: "Есть (кушать)" },
-    { en: "Beautiful", ru: "Красивый" },
-    { en: "Work", ru: "Работа" }
+    { en: "Cat", ru: "Кошка" }, { en: "Dog", ru: "Собака" },
+    { en: "Apple", ru: "Яблоко" }, { en: "Sun", ru: "Солнце" },
+    { en: "Water", ru: "Вода" }, { en: "Friend", ru: "Друг" },
+    { en: "Book", ru: "Книга" }, { en: "House", ru: "Дом" },
+    { en: "Tree", ru: "Дерево" }, { en: "Car", ru: "Машина" },
+    { en: "Time", ru: "Время" }, { en: "Money", ru: "Деньги" },
+    { en: "Music", ru: "Музыка" }, { en: "Sky", ru: "Небо" },
+    { en: "Happy", ru: "Счастливый" }, { en: "Red", ru: "Красный" },
+    { en: "To run", ru: "Бежать" }, { en: "To eat", ru: "Есть (кушать)" },
+    { en: "Beautiful", ru: "Красивый" }, { en: "Work", ru: "Работа" }
 ];
 
 let currentIndex = 0;
 let isQuizAnswered = false;
+let score = 0;
 
-// Безопасная функция вибрации (не ломается в браузере)
+// Функция вибрации (безопасная)
 function triggerHaptic(type) {
     if (tg.hapticFeedback) {
         tg.hapticFeedback.notificationOccurred(type);
@@ -38,13 +28,13 @@ function triggerHaptic(type) {
 }
 
 // --- НАВИГАЦИЯ ---
-
 function startMode(mode) {
     document.getElementById('main-menu').classList.add('hidden');
+    document.getElementById('results-section').classList.add('hidden');
     
-    // Перемешиваем массив, чтобы вопросы шли не по порядку
     shuffleArray(vocabulary);
     currentIndex = 0;
+    score = 0;
 
     if (mode === 'cards') {
         document.getElementById('cards-section').classList.remove('hidden');
@@ -58,16 +48,14 @@ function startMode(mode) {
 function goBack() {
     document.getElementById('cards-section').classList.add('hidden');
     document.getElementById('quiz-section').classList.add('hidden');
+    document.getElementById('results-section').classList.add('hidden');
     document.getElementById('main-menu').classList.remove('hidden');
 }
 
 // --- КАРТОЧКИ ---
-
 function showCard() {
     const cardElement = document.querySelector('.card');
     cardElement.classList.remove('flipped');
-    
-    // Ждем пока анимация возврата пройдет
     setTimeout(() => {
         document.getElementById('word-front').innerText = vocabulary[currentIndex].en;
         document.getElementById('word-back').innerText = vocabulary[currentIndex].ru;
@@ -89,17 +77,15 @@ function prevCard() {
 }
 
 // --- ВИКТОРИНА ---
-
 function showQuiz() {
     isQuizAnswered = false;
     const item = vocabulary[currentIndex];
     
-    // Сбрасываем интерфейс
-    document.getElementById('quiz-counter').innerText = `Слово ${currentIndex + 1} из ${vocabulary.length}`;
+    document.getElementById('quiz-counter').innerText = `Вопрос ${currentIndex + 1} из ${vocabulary.length}`;
     document.getElementById('quiz-question').innerText = item.en;
     document.getElementById('quiz-feedback').innerText = "";
     
-    // ВАЖНО: Скрываем кнопку "Дальше" в начале вопроса
+    // Скрываем кнопку "Дальше" перед новым вопросом
     const nextBtn = document.getElementById('next-quiz-btn');
     if (nextBtn) nextBtn.classList.add('hidden');
     
@@ -111,7 +97,6 @@ function showQuiz() {
     options.forEach(opt => {
         const btn = document.createElement('button');
         btn.innerText = opt;
-        // Передаем саму кнопку в функцию, чтобы менять её цвет
         btn.onclick = function() { checkAnswer(opt, item.ru, this); };
         optionsDiv.appendChild(btn);
     });
@@ -137,30 +122,46 @@ function checkAnswer(selected, correct, btnElement) {
     if (selected === correct) {
         btnElement.classList.add('correct');
         document.getElementById('quiz-feedback').innerText = "Верно! 🎉";
+        score++;
         triggerHaptic('success');
     } else {
         btnElement.classList.add('wrong');
         document.getElementById('quiz-feedback').innerText = `Ошибка. Правильно: ${correct}`;
         triggerHaptic('error');
         
-        // Подсветить правильную кнопку
-        const buttons = document.querySelectorAll('#quiz-options button');
-        buttons.forEach(btn => {
+        // Показать правильный ответ
+        document.querySelectorAll('#quiz-options button').forEach(btn => {
             if (btn.innerText === correct) btn.classList.add('correct');
         });
     }
 
-    // ВАЖНО: Показываем кнопку "Дальше" после любого ответа
-    if (nextBtn) {
-        nextBtn.classList.remove('hidden');
-    } else {
-        console.error("Кнопка 'Дальше' не найдена в HTML!");
-    }
+    // Показываем кнопку "Дальше"
+    if (nextBtn) nextBtn.classList.remove('hidden');
 }
 
 function nextQuestion() {
-    currentIndex = (currentIndex + 1) % vocabulary.length;
-    showQuiz();
+    if (currentIndex < vocabulary.length - 1) {
+        currentIndex++;
+        showQuiz();
+    } else {
+        showResults();
+    }
+}
+
+// --- РЕЗУЛЬТАТЫ ---
+function showResults() {
+    document.getElementById('quiz-section').classList.add('hidden');
+    document.getElementById('results-section').classList.remove('hidden');
+    
+    document.getElementById('final-score').innerText = `${score} / ${vocabulary.length}`;
+    
+    const msg = document.getElementById('result-message');
+    const percentage = (score / vocabulary.length) * 100;
+    
+    if (percentage === 100) msg.innerText = "Идеально! Вы мастер! 🏆";
+    else if (percentage >= 70) msg.innerText = "Отличный результат! 😎";
+    else if (percentage >= 40) msg.innerText = "Неплохо, но можно лучше. 🙂";
+    else msg.innerText = "Попробуйте еще раз! 📚";
 }
 
 function shuffleArray(array) {
